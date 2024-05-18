@@ -6,7 +6,11 @@ The other two excel sheets were used to add two more variables to all datasets. 
 R was used to study the received data [3]. Using 'Make tidy data.Rmd', these large datasets were transformed into highly standardized, readable, and tidy datasets [4]. which allow for a relatively quick and intuitive analysis using the packages within tidyverse [5]. By running this script, the output 'P1b_sample_tidy.txt' will be created, which has the same structure as the datasets used in this study. This process was further undergone for the datasets containing the other variables; the month of detection, the clinical presentation of the case, and the age of the patients.
 # Bibliography
 R Core Team. 2021. R: A Language and Environment for Statistical Computing. Vienna, Austria: R Foundation for Statistical Computing. https://www.R-project.org/.
+
 Simmonds, P., A. E. Gorbalenya, H. Harvala, T. Hovi, N. J. Knowles, A. M. Lindberg, M. S. Oberste, et al. 2020. “Recommendations for the Nomenclature of Enteroviruses and Rhinoviruses.” Archives of Virology 165 (March): 793–97. https://doi.org/10.1007/s00705-019-04520-6.
+
 United Nations, Statistics Division. 1999. “Standard Country or Area Codes for Statistical Use.” 1999. https://unstats.un.org/unsd/methodology/m49/.
+
 Wickham, Hadley. 2016. Ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York. https://ggplot2.tidyverse.org.
+
 Wickham, Hadley, Mara Averick, Jennifer Bryan, Winston Chang, Lucy D’Agostino McGowan, Romain François, Garrett Grolemund, et al. 2019. “Welcome to the tidyverse.” Journal of Open Source Software 4 (43): 1686. https://doi.org/10.21105/joss.01686.
