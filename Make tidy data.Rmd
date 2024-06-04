@@ -45,9 +45,9 @@ P1a_data_name = "P1a_tidy.txt"
 # Initiate a function to create the tidy data
 Create_tidytable <- function(df){                                 
   # first row is empty, second row is the column-names
-  N_files    = nrow(df)-2 
+  N_files_P1A    = nrow(df)-2 
   # I initiate an empty dataset with 7 columns and 6 rows for every lab.  
-  tidydf     = data.frame(matrix(ncol = 7, nrow = 6*N_files))   
+  tidydf     = data.frame(matrix(ncol = 7, nrow = 6*N_files_P1A))   
   colnames(tidydf) = c("Country","Lab","Year","Tests","Positives","Typed_attempted","Typed_succesful") 
   # The data is from 2018-2023 (6 years)
   for (yy in 1:6){
@@ -55,12 +55,18 @@ Create_tidytable <- function(df){
     year_selection = df[,c((4*yy-1):(4*yy+2))]          
     # Within this selection, the year is specified in the first column
     year = year_selection[1,1]                        
-    # Filling all the rows with the right data
-    tidydf[c((yy-1)*N_files+1):(yy*N_files), c(4:7)] = year_selection[c(3:nrow(df)),]   
+    # In the former dataset the years have seperate columns. In the tidy dataset, the years will be in the same column, specified by a single variable, namely 'Year'. At every year, there will be a row for each institute with the proper data. Starting at row 0 until row 24 for 2023. This comes down to rows (yy-1)*N_files_P1A+1 (1 for 2023, 25 for 2022, etc.). 
+    
+    # First row per year
+    starting_row = (yy-1)*N_files_P1A+1
+    # Final row per year
+    final_row    = yy*N_files_P1A
+    # Filling in the empty columns with the right data
+    tidydf[c(starting_row:final_row), c(4:7)] = year_selection[c(3:nrow(df)),]   
     # Filling empty column with the year
-    tidydf[c((yy-1)*N_files+1):(yy*N_files),3] = year                                   
+    tidydf[c(starting_row:final_row),3] = year                                   
     # Filling empty columns country and Lab
-    tidydf[c((yy-1)*N_files+1):(yy*N_files),c(1,2)]= df[c(3:nrow(df)),c(1,2)]         
+    tidydf[c(starting_row:final_row),c(1,2)]= df[c(3:nrow(df)),c(1,2)]         
     }
   tidydf = tidydf %>% arrange(Country,Lab,Year)
   return(tidydf)}
@@ -97,8 +103,14 @@ pb_sa[pb_sa=="UNKNOWN OR UNDEFINED" ]           = "Unknown"
 pb_sa[pb_sa=="VESICLE/ SKIN SWAB"   ]           = "Vesicle"
 pb_sa[pb_sa=="TOTAL NUMBER"]                    = "Total number"
 # Currently there are many empty cells in the columns of country and lab (only filled for the first row per lab). This fills the complete columns
-for (rr in 1:N_files){
-    pb_sa[(Length_sample_table*(rr-1)+2):(rr*Length_sample_table),c(1,2)] = pb_sa[(Length_sample_table*(rr-1)+1),c(1,2)]} 
+for (row in 1:N_files){
+    # Select the row 'Total number' for every lab. this is the first row with an empty 'country' and 'file' columns.
+    start_row = Length_sample_table*(row-1)+2
+    # Select the final row that belongs to this lab
+    final_row = row*Length_sample_table
+    # For columns 1 (country) and 2 (file (=lab)), fill in the value in the first row for this lab
+    pb_sa[start_row:final_row,c(1,2)] = pb_sa[(Length_sample_table*(row-1)+1),c(1,2)]
+    } 
 # The data for 2023 is in columns 4:13. For year 2022 this is 14:23, 2021 24:33, etc. Further, all columns 1:3 are added because these are the country, lab, and sample type
 pb_sa_2023 = pb_sa[,1:13]                                                     
 pb_sa_2022 = pb_sa[,c(1:3,14:23)]
@@ -107,35 +119,43 @@ pb_sa_2020 = pb_sa[,c(1:3,34:43)]
 pb_sa_2019 = pb_sa[,c(1:3,44:53)]
 pb_sa_2018 = pb_sa[,c(1:3,54:63)]
 
+# Now this is the datafiles we start with
+head(pb_sa_2023)
+```
+
+### Freq-table function
+```{r}
 # Creates a frequency table, with each virus type in a different column. Input is: pb_dataset, the year, the new column (Month, Clinical signs, Age, and in this case, specimen type (sample))
-# This function will be run for every year (2018-2023) seperately
+# This function will be run for every year (2018-2023) separately
 freq_table <- function(pb_data, yr, coln, L){
   # Number of columns of this table will be the number of viruses + year, country, lab and type of sample
   # Number of rows of this table will be equal to the number of labs times the number of rows per lab - 1 row (not interested in the row with EV types)
   table            = data.frame(matrix(ncol = length(Virs)+4,                   
                                        nrow = length(Filecodes)*(L-1)))         
   colnames(table)  = c("Country","Lab","Year",coln,Newvirs)
-  # The country, lab and new column name (Sample) are specified on the first row for the lab of interest, in columns 1, 2 and 3
-  table[,c(1,2,4)] = as.matrix(setNames(pb_data[-((L)*(1:N_files)-(L-1)),c(1,2,3)],NULL))
+  # Copying the rows with the same order in sample type per lab per country, every 9th row starting from 1 (i.e. 1, 10, 19, 28, etc.) should be removed (this is the row with virus types)
+  EVtype_rows = (L)*(1:N_files)-(L-1)
+  table[,c(1,2,4)] = as.matrix(setNames(pb_data[-EVtype_rows,c(1,2,3)],NULL))
   # The year is inputted in the function
   table[,3]        = yr                 
   # Looping over all possible virus names
   for (virus_index in 1:length(Virs)){                                          
     EV = Virs[virus_index]               
     # Find all matches to this virus name
-    Z  = which(pb_data==EV, arr.ind=TRUE)
+    Match_coordinates  = which(pb_data==EV, arr.ind=TRUE)
     # If there is a hit at all
-    if (length(Z)>0){         
+    if (length(Match_coordinates)>0){         
       # Loop over the rows and columns listed in matching cells
-      for (index in 1:nrow(Z)){                                
-        # Save the row number in r
-        r         = Z[index,1]    
-        # Save the column number in c
-        c         = Z[index,2]       
+      for (index in 1:nrow(Match_coordinates)){                                
+        # Save the row number of the match in y
+        y         = Match_coordinates[index,1]    
+        # Save the column number of the match in x
+        x         = Match_coordinates[index,2]       
         # Find the lab of of the match
-        Fil       = pb_data$File[r]   
-        # For this specific match [r, c], the new table with designated virus (column) and lab, will be filled with the numbers that are listed underneath the virus type in the original dataset
-        table[which(table$Lab==Fil),virus_index+4]=pb_data[r+(1:(L-1)),c]
+        Labnumber = pb_data$File[r] 
+        # For this specific match [y, x], the new table with designated virus (column) and lab, will be filled with the numbers that are listed underneath the virus type in the original dataset
+        Case_numbers_to_copy = pb_data[y+(1:(L-1)),x]
+        table[which(table$Lab==Labnumber),virus_index+4]=Case_numbers_to_copy
         }
       }     
     }
@@ -145,7 +165,9 @@ freq_table <- function(pb_data, yr, coln, L){
   table= table %>%                                                              
     mutate_at(c(5:ncol(table)), as.numeric)                                
   return (table)}
+```
 
+```{r}
 # Running the freq_table function for all datasets per year
 pb_sa_2023 = freq_table(pb_sa_2023,"2023","Sample",Length_sample_table) 
 pb_sa_2022 = freq_table(pb_sa_2022,"2022","Sample",Length_sample_table)
@@ -154,6 +176,12 @@ pb_sa_2020 = freq_table(pb_sa_2020,"2020","Sample",Length_sample_table)
 pb_sa_2019 = freq_table(pb_sa_2019,"2019","Sample",Length_sample_table)
 pb_sa_2018 = freq_table(pb_sa_2018,"2018","Sample",Length_sample_table)
 
+# Display one of these tables
+head(pb_sa_2023)
+```
+
+### Tidy-up function
+```{r}
 # This is a new function, that creates a tidy table from pb_sa_yyyy. An output is returned for each dataframe, all of which are merged in the end.
 Tidy_up  <- function(df,newcol){  
   # Being ample to call a new column the string that the variable "newcol" encodes
@@ -187,7 +215,9 @@ Tidy_up  <- function(df,newcol){
 
   long_df = long_df%>%arrange(Country,Lab,Year)
   return (long_df)}
+```
 
+```{r}
 # Tidy sample data
 pb_sa_2023_long = Tidy_up(pb_sa_2023,"Sample")
 pb_sa_2022_long = Tidy_up(pb_sa_2022,"Sample")
@@ -195,6 +225,10 @@ pb_sa_2021_long = Tidy_up(pb_sa_2021,"Sample")
 pb_sa_2020_long = Tidy_up(pb_sa_2020,"Sample")
 pb_sa_2019_long = Tidy_up(pb_sa_2019,"Sample")
 pb_sa_2018_long = Tidy_up(pb_sa_2018,"Sample")
+
+# Display one of these tables
+head(pb_sa_2023_long)
+# These tables can be merged into one long format
 Tidy_P1b_sample = rbind(pb_sa_2023_long,pb_sa_2022_long,pb_sa_2021_long,pb_sa_2020_long,pb_sa_2019_long,pb_sa_2018_long)
 
 write.table(Tidy_P1b_sample,file=P1b_data_name,sep=",",row.names = F)
