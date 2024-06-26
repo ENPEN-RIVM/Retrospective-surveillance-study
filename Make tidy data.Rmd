@@ -152,7 +152,7 @@ freq_table <- function(pb_data, yr, coln, L){
         # Save the column number of the match in x
         x         = Match_coordinates[index,2]       
         # Find the lab of of the match
-        Labnumber = pb_data$File[r] 
+        Labnumber = pb_data$File[y] 
         # For this specific match [y, x], the new table with designated virus (column) and lab, will be filled with the numbers that are listed underneath the virus type in the original dataset
         Case_numbers_to_copy = pb_data[y+(1:(L-1)),x]
         table[which(table$Lab==Labnumber),virus_index+4]=Case_numbers_to_copy
