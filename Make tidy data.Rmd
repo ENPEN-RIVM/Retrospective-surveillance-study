@@ -23,9 +23,9 @@ suppressWarnings(suppressMessages({
     library(lib, character.only=TRUE)}
 }))
 
-# Load P1a data
+# Load P1a data --> background data
 dataset_P1a   <- read_excel("dummydata_background.xlsx",.name_repair = "unique_quiet") 
-# Load P1b data
+# Load P1b data --> epidemiological and clinical data
 dataset_P1b_samples   <- read_excel("dummydata_P1b_samples.xlsx",.name_repair = "unique_quiet") 
 # List of EV types and species
 Enteroviruses         = read_excel("Enteroviruses.xlsx")%>% mutate(Species = as.factor(Species)) 
