@@ -11,7 +11,7 @@ The code in this file allows the creation of datasets in the tidy format for the
 ## 1. Installing libraries and importing data
 ```{r setup}
 # Specify vector with all required packages
-list_of_packages <- c("tidyverse","readxl", "xlsx")
+list_of_packages <- c("tidyverse","readxl")
 # Silence warnings and messages when importing
 suppressWarnings(suppressMessages({
   # Make list of packages to install if not installed
